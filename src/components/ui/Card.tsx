@@ -5,13 +5,15 @@ interface CardProps {
     className?: string;
     variant?: 'default' | 'glass' | 'stone';
     hover?: boolean;
+    style?: React.CSSProperties;
 }
 
 export function Card({
     children,
     className = '',
     variant = 'default',
-    hover = false
+    hover = false,
+    style
 }: CardProps) {
     const baseClasses = 'rounded-xl overflow-hidden';
 
@@ -24,7 +26,7 @@ export function Card({
     const hoverClasses = hover ? 'hover-lift cursor-pointer' : '';
 
     return (
-        <div className={`${baseClasses} ${variantClasses[variant]} ${hoverClasses} ${className}`}>
+        <div className={`${baseClasses} ${variantClasses[variant]} ${hoverClasses} ${className}`} style={style}>
             {children}
         </div>
     );
