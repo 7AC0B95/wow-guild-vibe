@@ -1,26 +1,331 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* TBC Dark Portal Theme */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core Colors */
+  --obsidian: #0a0a0f;
+  --obsidian-light: #12121a;
+  --obsidian-lighter: #1a1a25;
+  --fel-green: #32CD32;
+  --fel-green-dark: #228B22;
+  --fel-green-glow: #39ff14;
+  --ethereal-purple: #9945FF;
+  --ethereal-purple-dark: #7B2FE0;
+  --hellfire-orange: #FF4500;
+  --hellfire-red: #DC143C;
+  --stone-gray: #3a3a4a;
+  --stone-border: #4a4a5a;
+  --ancient-gold: #FFD700;
+
+  /* Text Colors */
+  --text-primary: #e8e8e8;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666680;
+
+  /* Background */
+  --background: var(--obsidian);
+  --foreground: var(--text-primary);
+
+  /* WoW Class Colors */
+  --class-warrior: #C79C6E;
+  --class-paladin: #F58CBA;
+  --class-hunter: #ABD473;
+  --class-rogue: #FFF569;
+  --class-priest: #FFFFFF;
+  --class-shaman: #0070DE;
+  --class-mage: #69CCF0;
+  --class-warlock: #9482C9;
+  --class-druid: #FF7D0A;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-obsidian: var(--obsidian);
+  --color-obsidian-light: var(--obsidian-light);
+  --color-obsidian-lighter: var(--obsidian-lighter);
+  --color-fel-green: var(--fel-green);
+  --color-fel-green-dark: var(--fel-green-dark);
+  --color-fel-green-glow: var(--fel-green-glow);
+  --color-ethereal-purple: var(--ethereal-purple);
+  --color-ethereal-purple-dark: var(--ethereal-purple-dark);
+  --color-hellfire-orange: var(--hellfire-orange);
+  --color-hellfire-red: var(--hellfire-red);
+  --color-stone-gray: var(--stone-gray);
+  --color-stone-border: var(--stone-border);
+  --color-ancient-gold: var(--ancient-gold);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  /* Class Colors */
+  --color-class-warrior: var(--class-warrior);
+  --color-class-paladin: var(--class-paladin);
+  --color-class-hunter: var(--class-hunter);
+  --color-class-rogue: var(--class-rogue);
+  --color-class-priest: var(--class-priest);
+  --color-class-shaman: var(--class-shaman);
+  --color-class-mage: var(--class-mage);
+  --color-class-warlock: var(--class-warlock);
+  --color-class-druid: var(--class-druid);
+
+  --font-heading: 'Cinzel', serif;
+  --font-body: 'Inter', sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fel-green) var(--obsidian-light);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--obsidian-light);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--fel-green-dark);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--fel-green);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+/* Stone texture border utility */
+.stone-border {
+  border: 2px solid var(--stone-border);
+  background-image:
+    linear-gradient(135deg, rgba(58, 58, 74, 0.3) 0%, transparent 50%),
+    linear-gradient(225deg, rgba(74, 74, 90, 0.3) 0%, transparent 50%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Fel glow effects */
+.fel-glow {
+  box-shadow:
+    0 0 20px rgba(50, 205, 50, 0.3),
+    0 0 40px rgba(50, 205, 50, 0.1);
+}
+
+.fel-glow-text {
+  text-shadow:
+    0 0 10px rgba(50, 205, 50, 0.5),
+    0 0 20px rgba(50, 205, 50, 0.3);
+}
+
+.purple-glow {
+  box-shadow:
+    0 0 20px rgba(153, 69, 255, 0.3),
+    0 0 40px rgba(153, 69, 255, 0.1);
+}
+
+/* Gothic heading style */
+.gothic-heading {
+  font-family: var(--font-heading);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Animated dark portal background */
+@keyframes portalPulse {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes floatParticle {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.portal-bg {
+  background:
+    radial-gradient(ellipse at center, rgba(50, 205, 50, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(153, 69, 255, 0.08) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 20%, rgba(255, 69, 0, 0.06) 0%, transparent 40%),
+    linear-gradient(180deg, var(--obsidian) 0%, var(--obsidian-light) 100%);
+}
+
+/* Glass card effect */
+.glass-card {
+  background: rgba(18, 18, 26, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(74, 74, 90, 0.5);
+}
+
+/* Button styles */
+.btn-fel {
+  background: linear-gradient(135deg, var(--fel-green-dark) 0%, var(--fel-green) 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 1px solid var(--fel-green);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.btn-fel:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 20px rgba(50, 205, 50, 0.4),
+    0 0 30px rgba(50, 205, 50, 0.2);
+}
+
+.btn-purple {
+  background: linear-gradient(135deg, var(--ethereal-purple-dark) 0%, var(--ethereal-purple) 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 1px solid var(--ethereal-purple);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.btn-purple:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 20px rgba(153, 69, 255, 0.4),
+    0 0 30px rgba(153, 69, 255, 0.2);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 2px solid var(--stone-border);
+}
+
+.btn-outline:hover {
+  border-color: var(--fel-green);
+  color: var(--fel-green);
+  background: rgba(50, 205, 50, 0.1);
+}
+
+/* Navigation hover effect */
+.nav-link {
+  position: relative;
+  padding: 0.5rem 0;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--fel-green), var(--ethereal-purple));
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* Card hover effects */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(50, 205, 50, 0.1);
+}
+
+/* Raid role colors */
+.role-tank {
+  color: #4a90d9;
+}
+
+.role-healer {
+  color: #4aff4a;
+}
+
+.role-dps {
+  color: #ff4a4a;
+}
+
+/* Mobile menu animation */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.mobile-menu-enter {
+  animation: slideIn 0.3s ease forwards;
+}
+
+/* Loading skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg,
+      var(--obsidian-light) 25%,
+      var(--obsidian-lighter) 50%,
+      var(--obsidian-light) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
