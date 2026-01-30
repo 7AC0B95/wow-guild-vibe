@@ -32,11 +32,12 @@ import {
 } from 'date-fns';
 
 // Mock raid events
+const currentYear = new Date().getFullYear();
 const mockEvents = [
     {
         id: '1',
         title: 'Karazhan',
-        date: new Date(2024, 0, 17),
+        date: new Date(currentYear, 0, 17),
         startTime: '20:00',
         maxTanks: 2,
         maxHealers: 3,
@@ -50,7 +51,7 @@ const mockEvents = [
     {
         id: '2',
         title: 'SSC + TK',
-        date: new Date(2024, 0, 21),
+        date: new Date(currentYear, 0, 21),
         startTime: '19:00',
         maxTanks: 3,
         maxHealers: 7,
@@ -64,7 +65,7 @@ const mockEvents = [
     {
         id: '3',
         title: 'Gruul + Mag',
-        date: new Date(2024, 0, 24),
+        date: new Date(currentYear, 0, 24),
         startTime: '21:00',
         maxTanks: 2,
         maxHealers: 6,
