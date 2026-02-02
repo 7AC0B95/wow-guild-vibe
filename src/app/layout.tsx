@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Cinzel } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { CharacterProvider } from "@/context/CharacterContext";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
@@ -39,13 +40,15 @@ export default function RootLayout({
         className={`${inter.variable} ${cinzel.variable} bg-obsidian text-text-primary antialiased`}
       >
         <AuthProvider>
-          <div className="flex flex-col min-h-screen">
-            <Navigation />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <CharacterProvider>
+            <div className="flex flex-col min-h-screen">
+              <Navigation />
+              <main className="flex-1">
+                {children}
+              </main>
+              <Footer />
+            </div>
+          </CharacterProvider>
         </AuthProvider>
       </body>
     </html>

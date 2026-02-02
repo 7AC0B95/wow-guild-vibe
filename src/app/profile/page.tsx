@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     User,
@@ -12,61 +12,104 @@ import {
     Heart,
     Swords,
     Star,
-    Settings
+    Settings,
+    Loader2,
+    AlertCircle,
+    RefreshCw
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, Button, ClassIcon, RoleBadge, ClassBadge } from '@/components/ui';
+import { Card, CardContent, Button, ClassIcon, RoleBadge } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
+import { useCharacters } from '@/context/CharacterContext';
 import { CLASS_COLORS } from '@/lib/constants';
-import { Character, WowClass, Role } from '@/lib/types';
-
-// Mock user characters
-const mockCharacters: Character[] = [
-    {
-        id: '1',
-        userId: 'current-user',
-        name: 'Artherius',
-        wowClass: 'Warrior',
-        race: 'Human',
-        role: 'Tank',
-        faction: 'Alliance',
-        rank: 'Guild Master',
-        isMain: true,
-        level: 70,
-        professions: ['Blacksmithing', 'Mining'],
-        upgradesUrl: 'https://seventyupgrades.com',
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-01',
-    },
-    {
-        id: '2',
-        userId: 'current-user',
-        name: 'Thunderbolt',
-        wowClass: 'Shaman',
-        race: 'Draenei',
-        role: 'Healer',
-        faction: 'Alliance',
-        rank: 'Alt',
-        isMain: false,
-        level: 70,
-        professions: ['Alchemy', 'Herbalism'],
-        createdAt: '2024-01-15',
-        updatedAt: '2024-01-15',
-    },
-];
+import { Character } from '@/lib/types';
+import { supabase } from '@/lib/supabase';
+import AddCharacterModal from '@/components/profile/AddCharacterModal';
+import EditCharacterModal from '@/components/profile/EditCharacterModal';
+import ConfirmDeleteModal from '@/components/profile/ConfirmDeleteModal';
 
 export default function ProfilePage() {
-    const { user, loading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const router = useRouter();
-    const [characters, setCharacters] = useState(mockCharacters);
+
+    // Context state
+    const {
+        characters,
+        loading: loadingCharacters,
+        error: charactersError,
+        refreshCharacters,
+        addCharacter,
+        updateCharacter,
+        removeCharacter
+    } = useCharacters();
+
+    // Modal state
     const [showAddModal, setShowAddModal] = useState(false);
+    const [editingCharacter, setEditingCharacter] = useState<Character | null>(null);
+
+    // Deleting state
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [characterToDelete, setCharacterToDelete] = useState<Character | null>(null);
 
     // Redirect if not logged in
-    if (!loading && !user) {
-        router.push('/login');
-        return null;
-    }
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push('/login');
+        }
+    }, [authLoading, user, router]);
 
-    if (loading) {
+    // Handle character deletion
+    const handleDeleteCharacter = async () => {
+        if (!characterToDelete) return;
+
+        setDeletingId(characterToDelete.id);
+
+        try {
+            const { error } = await supabase
+                .from('characters')
+                .delete()
+                .eq('id', characterToDelete.id);
+
+            if (error) throw error;
+
+            removeCharacter(characterToDelete.id);
+            setCharacterToDelete(null);
+        } catch (err) {
+            console.error('Failed to delete character:', err);
+            alert('Failed to delete character. Please try again.');
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    // Handle setting a character as main
+    const handleSetMain = async (character: Character) => {
+        try {
+            // First, unset all characters as main
+            await supabase
+                .from('characters')
+                .update({ is_main: false })
+                .eq('user_id', user!.id);
+
+            // Then set the selected character as main
+            const { error } = await supabase
+                .from('characters')
+                .update({ is_main: true })
+                .eq('id', character.id);
+
+            if (error) throw error;
+
+            // Update local state via context (context handles untoggling others)
+            updateCharacter({ ...character, isMain: true });
+        } catch (err) {
+            console.error('Failed to set main character:', err);
+            alert('Failed to update main character. Please try again.');
+            // Revert by refreshing
+            refreshCharacters(true);
+        }
+    };
+
+    // Loading state
+    if (authLoading) {
         return (
             <div className="min-h-screen portal-bg pt-24 pb-16 flex items-center justify-center">
                 <div className="w-12 h-12 border-4 border-fel-green border-t-transparent rounded-full animate-spin" />
@@ -74,18 +117,10 @@ export default function ProfilePage() {
         );
     }
 
-    const handleDeleteCharacter = (id: string) => {
-        if (confirm('Are you sure you want to delete this character?')) {
-            setCharacters(characters.filter((c) => c.id !== id));
-        }
-    };
-
-    const handleSetMain = (id: string) => {
-        setCharacters(characters.map((c) => ({
-            ...c,
-            isMain: c.id === id,
-        })));
-    };
+    // Not logged in (will redirect)
+    if (!user) {
+        return null;
+    }
 
     return (
         <div className="min-h-screen portal-bg pt-24 pb-16">
@@ -138,124 +173,198 @@ export default function ProfilePage() {
 
                 {/* Characters Section */}
                 <div className="mb-8">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                         <h2 className="gothic-heading text-xl text-text-primary flex items-center gap-2">
-                            <User className="w-6 h-6 text-fel-green" />
+                            <User className="w-5 h-5 sm:w-6 sm:h-6 text-fel-green" />
                             My Characters
+                            {characters.length > 0 && (
+                                <span className="px-2 py-0.5 rounded-full bg-fel-green/20 text-fel-green text-sm font-normal">
+                                    {characters.length}
+                                </span>
+                            )}
                         </h2>
-                        <Button
-                            size="sm"
-                            icon={<Plus className="w-4 h-4" />}
-                            onClick={() => setShowAddModal(true)}
-                        >
-                            Add Character
-                        </Button>
+                        <div className="flex gap-2">
+                            {charactersError && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    icon={<RefreshCw className="w-4 h-4" />}
+                                    onClick={() => refreshCharacters(true)}
+                                >
+                                    Retry
+                                </Button>
+                            )}
+                            <Button
+                                size="sm"
+                                icon={<Plus className="w-4 h-4" />}
+                                onClick={() => setShowAddModal(true)}
+                                className="whitespace-nowrap"
+                            >
+                                Add Character
+                            </Button>
+                        </div>
                     </div>
 
-                    <div className="grid sm:grid-cols-2 gap-4">
-                        {characters.map((character) => (
-                            <Card
-                                key={character.id}
-                                variant="glass"
-                                className={character.isMain ? 'ring-2 ring-ancient-gold' : ''}
-                            >
-                                <CardContent className="p-5">
-                                    <div className="flex items-start gap-4">
-                                        <ClassIcon wowClass={character.wowClass} size="lg" />
+                    {/* Loading State */}
+                    {loadingCharacters && characters.length === 0 && (
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            {[1, 2].map((i) => (
+                                <div key={i} className="h-48 rounded-xl bg-obsidian-light animate-pulse border border-stone-border" />
+                            ))}
+                        </div>
+                    )}
 
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h3
-                                                    className="font-semibold text-lg"
-                                                    style={{ color: CLASS_COLORS[character.wowClass] }}
-                                                >
-                                                    {character.name}
-                                                </h3>
-                                                {character.isMain && (
-                                                    <Star className="w-4 h-4 text-ancient-gold fill-ancient-gold" />
-                                                )}
-                                            </div>
+                    {/* Error State */}
+                    {!loadingCharacters && charactersError && characters.length === 0 && (
+                        <div className="p-6 rounded-xl bg-hellfire-red/10 border border-hellfire-red/30 flex items-center gap-4">
+                            <AlertCircle className="w-8 h-8 text-hellfire-red flex-shrink-0" />
+                            <div>
+                                <p className="text-text-primary font-medium">Failed to load characters</p>
+                                <p className="text-text-secondary text-sm">{charactersError}</p>
+                            </div>
+                        </div>
+                    )}
 
-                                            <p className="text-sm text-text-secondary mb-2">
-                                                Level {character.level} {character.race} {character.wowClass}
-                                            </p>
+                    {/* Empty State */}
+                    {!loadingCharacters && !charactersError && characters.length === 0 && (
+                        <Card variant="glass" className="border-dashed border-2">
+                            <CardContent className="p-12 text-center">
+                                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-fel-green/20 flex items-center justify-center">
+                                    <User className="w-8 h-8 text-fel-green" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-text-primary mb-2">
+                                    No characters yet
+                                </h3>
+                                <p className="text-text-secondary mb-6 max-w-md mx-auto">
+                                    Add your first World of Warcraft character to start signing up for raids and participating in guild activities.
+                                </p>
+                                <Button
+                                    icon={<Plus className="w-4 h-4" />}
+                                    onClick={() => setShowAddModal(true)}
+                                >
+                                    Add Your First Character
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
 
-                                            <div className="flex flex-wrap items-center gap-2 mb-3">
-                                                <RoleBadge role={character.role} />
-                                                <span className="text-xs text-text-muted">{character.rank}</span>
-                                            </div>
+                    {/* Characters Grid */}
+                    {characters.length > 0 && (
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            {characters.map((character) => (
+                                <Card
+                                    key={character.id}
+                                    variant="glass"
+                                    className={`transition-all duration-300 hover:border-stone-gray ${character.isMain ? 'ring-2 ring-ancient-gold' : ''
+                                        }`}
+                                >
+                                    <CardContent className="p-4 sm:p-5">
+                                        <div className="flex items-start gap-3 sm:gap-4">
+                                            <ClassIcon wowClass={character.wowClass} size="lg" />
 
-                                            {character.professions.length > 0 && (
-                                                <p className="text-xs text-text-muted mb-3">
-                                                    {character.professions.join(' • ')}
-                                                </p>
-                                            )}
-
-                                            <div className="flex items-center gap-2">
-                                                {character.upgradesUrl ? (
-                                                    <a
-                                                        href={character.upgradesUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center gap-1 text-xs text-fel-green hover:underline"
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h3
+                                                        className="font-semibold text-lg"
+                                                        style={{ color: CLASS_COLORS[character.wowClass] }}
                                                     >
-                                                        <ExternalLink className="w-3 h-3" />
-                                                        Seventy Upgrades
-                                                    </a>
-                                                ) : (
-                                                    <button className="text-xs text-ethereal-purple hover:underline">
-                                                        + Add Upgrades Link
+                                                        {character.name}
+                                                    </h3>
+                                                    {character.isMain && (
+                                                        <Star className="w-4 h-4 text-ancient-gold fill-ancient-gold" />
+                                                    )}
+                                                </div>
+
+                                                <p className="text-xs sm:text-sm text-text-secondary mb-2">
+                                                    Lv.{character.level} {character.race} {character.wowClass}
+                                                </p>
+
+                                                <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                    <RoleBadge role={character.role} />
+                                                    <span className="text-xs text-text-muted">{character.rank}</span>
+                                                </div>
+
+                                                {character.professions.length > 0 && (
+                                                    <p className="text-xs text-text-muted mb-3">
+                                                        {character.professions.join(' • ')}
+                                                    </p>
+                                                )}
+
+                                                <div className="flex items-center gap-2">
+                                                    {character.upgradesUrl ? (
+                                                        <a
+                                                            href={character.upgradesUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-1 text-xs text-fel-green hover:underline"
+                                                        >
+                                                            <ExternalLink className="w-3 h-3" />
+                                                            Seventy Upgrades
+                                                        </a>
+                                                    ) : (
+                                                        <button className="text-xs text-ethereal-purple hover:underline">
+                                                            + Add Upgrades Link
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Actions - horizontal on mobile, vertical on larger */}
+                                            <div className="flex sm:flex-col gap-1 sm:gap-2">
+                                                {!character.isMain && (
+                                                    <button
+                                                        onClick={() => handleSetMain(character)}
+                                                        className="p-2 rounded-lg hover:bg-obsidian-lighter text-text-muted 
+                                                                 hover:text-ancient-gold transition-colors"
+                                                        title="Set as main"
+                                                    >
+                                                        <Star className="w-4 h-4" />
                                                     </button>
                                                 )}
+                                                <button
+                                                    onClick={() => setEditingCharacter(character)}
+                                                    className="p-2 rounded-lg hover:bg-obsidian-lighter text-text-muted 
+                                                               hover:text-text-primary transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => setCharacterToDelete(character)}
+                                                    disabled={deletingId === character.id}
+                                                    className="p-2 rounded-lg hover:bg-hellfire-red/20 text-text-muted 
+                                                               hover:text-hellfire-red transition-colors disabled:opacity-50"
+                                                    title="Delete"
+                                                >
+                                                    {deletingId === character.id ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="w-4 h-4" />
+                                                    )}
+                                                </button>
                                             </div>
                                         </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
 
-                                        {/* Actions */}
-                                        <div className="flex flex-col gap-2">
-                                            {!character.isMain && (
-                                                <button
-                                                    onClick={() => handleSetMain(character.id)}
-                                                    className="p-2 rounded-lg hover:bg-obsidian-lighter text-text-muted 
-                                     hover:text-ancient-gold transition-colors"
-                                                    title="Set as main"
-                                                >
-                                                    <Star className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                            <button
-                                                className="p-2 rounded-lg hover:bg-obsidian-lighter text-text-muted 
-                                   hover:text-text-primary transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteCharacter(character.id)}
-                                                className="p-2 rounded-lg hover:bg-hellfire-red/20 text-text-muted 
-                                   hover:text-hellfire-red transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-
-                        {/* Add Character Card */}
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="min-h-[200px] border-2 border-dashed border-stone-border rounded-xl
-                         flex flex-col items-center justify-center gap-3
-                         hover:border-fel-green hover:bg-fel-green/5 transition-all"
-                        >
-                            <div className="w-12 h-12 rounded-full bg-fel-green/20 flex items-center justify-center">
-                                <Plus className="w-6 h-6 text-fel-green" />
-                            </div>
-                            <span className="text-text-secondary">Add New Character</span>
-                        </button>
-                    </div>
+                            {/* Add Character Card */}
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="min-h-[200px] border-2 border-dashed border-stone-border rounded-xl
+                                         flex flex-col items-center justify-center gap-3
+                                         hover:border-fel-green hover:bg-fel-green/5 transition-all group"
+                            >
+                                <div className="w-12 h-12 rounded-full bg-fel-green/20 flex items-center justify-center
+                                              group-hover:bg-fel-green/30 transition-colors">
+                                    <Plus className="w-6 h-6 text-fel-green" />
+                                </div>
+                                <span className="text-text-secondary group-hover:text-text-primary transition-colors">
+                                    Add New Character
+                                </span>
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Activity & Stats */}
@@ -294,6 +403,33 @@ export default function ProfilePage() {
                     </Card>
                 </div>
             </div>
+
+            {/* Add Character Modal */}
+            <AddCharacterModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onCharacterAdded={addCharacter}
+                userId={user.id}
+            />
+
+            {/* Edit Character Modal */}
+            {editingCharacter && (
+                <EditCharacterModal
+                    isOpen={!!editingCharacter}
+                    onClose={() => setEditingCharacter(null)}
+                    onCharacterUpdated={updateCharacter}
+                    character={editingCharacter}
+                />
+            )}
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmDeleteModal
+                isOpen={!!characterToDelete}
+                onClose={() => setCharacterToDelete(null)}
+                onConfirm={handleDeleteCharacter}
+                isDeleting={deletingId === characterToDelete?.id}
+                characterName={characterToDelete?.name || ''}
+            />
         </div>
     );
 }

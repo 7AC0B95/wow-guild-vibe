@@ -20,10 +20,10 @@ import { useAuth } from '@/context/AuthContext';
 
 const iconMap: Record<string, React.ElementType> = {
     Home,
-    Users,
+    Roster: Users,
     Calendar,
-    MessageSquare,
-    User,
+    Forum: MessageSquare,
+    Profile: User,
 };
 
 export default function Navigation() {
@@ -219,7 +219,7 @@ export default function Navigation() {
                         {/* Guild info footer */}
                         <div className="mt-8 pt-6 border-t border-stone-border">
                             <p className="text-xs text-text-muted text-center">
-                                © 2024 Dark Portal Guild • The Burning Crusade Classic
+                                © 2026 Dark Portal Guild • The Burning Crusade Classic
                             </p>
                         </div>
                     </div>
