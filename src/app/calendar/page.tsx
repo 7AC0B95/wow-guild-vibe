@@ -37,7 +37,7 @@ const mockEvents = [
     {
         id: '1',
         title: 'Karazhan',
-        date: new Date(currentYear, 0, 17),
+        date: new Date(currentYear, 1, 11),
         startTime: '20:00',
         maxTanks: 2,
         maxHealers: 3,
@@ -51,7 +51,7 @@ const mockEvents = [
     {
         id: '2',
         title: 'SSC + TK',
-        date: new Date(currentYear, 0, 21),
+        date: new Date(currentYear, 1, 15),
         startTime: '19:00',
         maxTanks: 3,
         maxHealers: 7,
@@ -65,7 +65,7 @@ const mockEvents = [
     {
         id: '3',
         title: 'Gruul + Mag',
-        date: new Date(currentYear, 0, 24),
+        date: new Date(currentYear, 1, 22),
         startTime: '21:00',
         maxTanks: 2,
         maxHealers: 6,

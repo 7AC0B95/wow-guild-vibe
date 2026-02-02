@@ -76,27 +76,27 @@ export default function HeroSection() {
             {/* Animated particles - Only render on client to avoid hydration mismatch */}
             {mounted && (
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    {[...Array(20)].map((_, i) => (
+                    {[...Array(30)].map((_, i) => (
                         <div
                             key={i}
                             className="absolute w-1 h-1 rounded-full bg-fel-green/60"
                             style={{
                                 left: `${Math.random() * 100}%`,
-                                top: `${100 + Math.random() * 20}%`,
+                                top: `${Math.random() * 120}%`,
                                 animation: `floatParticle ${8 + Math.random() * 12}s linear infinite`,
-                                animationDelay: `${Math.random() * 10}s`,
+                                animationDelay: `${-Math.random() * 20}s`,
                             }}
                         />
                     ))}
-                    {[...Array(10)].map((_, i) => (
+                    {[...Array(15)].map((_, i) => (
                         <div
                             key={`purple-${i}`}
                             className="absolute w-1.5 h-1.5 rounded-full bg-ethereal-purple/40"
                             style={{
                                 left: `${Math.random() * 100}%`,
-                                top: `${100 + Math.random() * 20}%`,
+                                top: `${Math.random() * 120}%`,
                                 animation: `floatParticle ${10 + Math.random() * 15}s linear infinite`,
-                                animationDelay: `${Math.random() * 8}s`,
+                                animationDelay: `${-Math.random() * 25}s`,
                             }}
                         />
                     ))}
@@ -262,6 +262,7 @@ export default function HeroSection() {
                                         className="h-full transition-all duration-300 group-hover:border-opacity-100"
                                         style={{
                                             borderColor: `${feature.color}40`,
+                                            '--feature-color': feature.color,
                                         } as React.CSSProperties}
                                     >
                                         <CardContent className="text-center p-8">
@@ -277,7 +278,9 @@ export default function HeroSection() {
                                                     style={{ color: feature.color }}
                                                 />
                                             </div>
-                                            <h3 className="gothic-heading text-lg text-text-primary mb-2 group-hover:text-fel-green transition-colors">
+                                            <h3
+                                                className="gothic-heading text-lg text-text-primary mb-2 transition-colors group-hover:[color:var(--feature-color)]"
+                                            >
                                                 {feature.title}
                                             </h3>
                                             <p className="text-sm text-text-secondary">
